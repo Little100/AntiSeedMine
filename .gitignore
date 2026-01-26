@@ -1,0 +1,91 @@
+# Compiled class files
+*.class
+# Log files
+*.log
+# BlueJ files
+*.ctxt
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+# Virtual machine crash logs
+hs_err_pid*
+replay_pid*
+# Gradle files
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+# VS Code
+.vscode/
+# Mac
+.DS_Store
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+# Minecraft server files (for testing)
+server/
+run/
+logs/
+world/
+world_nether/
+world_the_end/
+plugins/
+cache/
+crash-reports/
+*.lock
+server.properties
+ops.json
+whitelist.json
+banned-ips.json
+banned-players.json
+usercache.json
+usernamecache.json
+# Paper specific
+paper-*.jar
+spigot-*.jar
+craftbukkit-*.jar
+# Plugin development
+*.jar.original
+dependency-reduced-pom.xml
+# Temporary files
+*.tmp
+*.temp
+*~
+# Environment variables
+.env
+.env.local
+.env.*.local

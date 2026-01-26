@@ -1,0 +1,43 @@
+# 时间戳设置
+timestamp:
+  # 时间戳来源类型:
+  # - WORLD_CREATION: 使用世界创建时间 (默认)
+  # - SERVER_START: 使用服务器启动时间 (每次重启都会改变)
+  # - CUSTOM: 使用下面的自定义值
+  source: WORLD_CREATION
+  
+  # 自定义时间戳值 (仅在 CUSTOM 时使用)
+  # 设置为 0 则使用当前系统时间
+  custom-value: 0
+
+# 偏移范围设置
+offset:
+  # X轴偏移范围 (方块)
+  x:
+    min: 5
+    max: 10
+  
+  # Z轴偏移范围 (方块)
+  z:
+    min: 5
+    max: 10
+  
+  # Y轴偏移范围 (方块)
+  y:
+    min: 1
+    max: 2
+
+# 世界设置
+worlds:
+  # 为所有世界启用或仅为特定世界启用
+  # 设置为 true 则为所有世界启用
+  enable-all: true
+  
+  # 要启用的世界列表 (仅在 enable-all 为 false 时使用)
+  enabled-worlds:
+    - world
+    - world_nether
+    - world_the_end
+
+# 调试模式 遇到问题请使用开启debug反馈
+debug: false

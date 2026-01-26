@@ -1,0 +1,41 @@
+# 矿物方块列表
+# 根据需要添加或删除方块
+ores:
+  # 煤炭
+  - COAL_ORE
+  - DEEPSLATE_COAL_ORE
+  
+  # 铁
+  - IRON_ORE
+  - DEEPSLATE_IRON_ORE
+  
+  # 铜 (1.17+)
+  - COPPER_ORE
+  - DEEPSLATE_COPPER_ORE
+  
+  # 金
+  - GOLD_ORE
+  - DEEPSLATE_GOLD_ORE
+  - NETHER_GOLD_ORE
+  
+  # 红石
+  - REDSTONE_ORE
+  - DEEPSLATE_REDSTONE_ORE
+  
+  # 青金石
+  - LAPIS_ORE
+  - DEEPSLATE_LAPIS_ORE
+  
+  # 钻石
+  - DIAMOND_ORE
+  - DEEPSLATE_DIAMOND_ORE
+  
+  # 绿宝石
+  - EMERALD_ORE
+  - DEEPSLATE_EMERALD_ORE
+  
+  # 下界石英
+  - NETHER_QUARTZ_ORE
+  
+  # 远古残骸
+  - ANCIENT_DEBRIS
