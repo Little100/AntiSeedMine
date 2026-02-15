@@ -70,6 +70,10 @@ public final class AntiSeedMine extends JavaPlugin {
         return serverStartTime;
     }
 
+    public OreOffsetListener getOreOffsetListener() {
+        return oreOffsetListener;
+    }
+
     public void reload() {
         configManager.reloadConfig();
         blockManager.loadBlocks();

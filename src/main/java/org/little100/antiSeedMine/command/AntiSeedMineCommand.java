@@ -32,6 +32,8 @@ public class AntiSeedMineCommand implements CommandExecutor, TabCompleter {
                 return handleReload(sender);
             case "info":
                 return handleInfo(sender);
+            case "rescan":
+                return handleRescan(sender);
             case "help":
             default:
                 sendHelp(sender);
@@ -63,8 +65,24 @@ public class AntiSeedMineCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage("§eX偏移范围: §f" + plugin.getConfigManager().getOffsetXMin() + " ~ " + plugin.getConfigManager().getOffsetXMax());
         sender.sendMessage("§eZ偏移范围: §f" + plugin.getConfigManager().getOffsetZMin() + " ~ " + plugin.getConfigManager().getOffsetZMax());
         sender.sendMessage("§eY偏移范围: §f" + plugin.getConfigManager().getOffsetYMin() + " ~ " + plugin.getConfigManager().getOffsetYMax());
+        sender.sendMessage("§e激进验证: §f" + (plugin.getConfigManager().isAggressiveVerify() ? "§a开启" : "§c关闭"));
+        sender.sendMessage("§e重检已加载区块: §f" + (plugin.getConfigManager().isRecheckLoadedChunks() ? "§a开启" : "§c关闭"));
         sender.sendMessage("§e调试模式: §f" + (plugin.getConfigManager().isDebug() ? "开启" : "关闭"));
         sender.sendMessage("§6=========================================");
+        return true;
+    }
+
+    private boolean handleRescan(CommandSender sender) {
+        if (!sender.hasPermission("antiseedmine.rescan")) {
+            sender.sendMessage("§c你没有权限执行此命令!");
+            return true;
+        }
+        
+        sender.sendMessage("§e[AntiSeedMine] 开始扫描所有已加载区块中的矿物...");
+        
+        int chunks = plugin.getOreOffsetListener().rescanAllChunks();
+        
+        sender.sendMessage("§a[AntiSeedMine] 已提交 " + chunks + " 个区块的矿物偏移任务!");
         return true;
     }
 
@@ -72,6 +90,7 @@ public class AntiSeedMineCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage("§6========== AntiSeedMine 帮助 ==========");
         sender.sendMessage("§e/asm reload §7- 重新加载配置");
         sender.sendMessage("§e/asm info §7- 查看插件信息");
+        sender.sendMessage("§e/asm rescan §7- 重新扫描所有已加载区块的矿物");
         sender.sendMessage("§e/asm help §7- 显示此帮助");
         sender.sendMessage("§6=========================================");
     }
@@ -85,6 +104,9 @@ public class AntiSeedMineCommand implements CommandExecutor, TabCompleter {
             }
             if (sender.hasPermission("antiseedmine.info")) {
                 completions.add("info");
+            }
+            if (sender.hasPermission("antiseedmine.rescan")) {
+                completions.add("rescan");
             }
             completions.add("help");
             

@@ -13,7 +13,7 @@ folia-supported: true
 commands:
   antiseedmine:
     description: AntiSeedMine 主命令
-    usage: /antiseedmine <reload|info|help>
+    usage: /antiseedmine <reload|info|rescan|help>
     aliases: [asm]
     permission: antiseedmine.use
 
@@ -26,6 +26,7 @@ permissions:
       antiseedmine.use: true
       antiseedmine.reload: true
       antiseedmine.info: true
+      antiseedmine.rescan: true
   antiseedmine.use:
     description: 使用 AntiSeedMine 命令
     default: op
@@ -34,4 +35,7 @@ permissions:
     default: op
   antiseedmine.info:
     description: 查看插件信息
+    default: op
+  antiseedmine.rescan:
+    description: 重新扫描所有已加载区块的矿物
     default: op

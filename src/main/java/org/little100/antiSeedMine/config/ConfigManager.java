@@ -23,6 +23,11 @@ public class ConfigManager {
     private boolean enableAllWorlds;
     private java.util.List<String> enabledWorlds;
     
+    private boolean aggressiveVerify;
+    
+    // 重新检测已加载区块
+    private boolean recheckLoadedChunks;
+    
     // 调试模式
     private boolean debug;
 
@@ -63,6 +68,10 @@ public class ConfigManager {
         enableAllWorlds = config.getBoolean("worlds.enable-all", true);
         enabledWorlds = config.getStringList("worlds.enabled-worlds");
         
+        aggressiveVerify = config.getBoolean("aggressive-verify", true);
+        
+        recheckLoadedChunks = config.getBoolean("recheck-loaded-chunks", false);
+        
         // 加载调试模式
         debug = config.getBoolean("debug", false);
         
@@ -72,6 +81,8 @@ public class ConfigManager {
             plugin.getLogger().info("  X偏移范围: " + offsetXMin + " ~ " + offsetXMax);
             plugin.getLogger().info("  Z偏移范围: " + offsetZMin + " ~ " + offsetZMax);
             plugin.getLogger().info("  Y偏移范围: " + offsetYMin + " ~ " + offsetYMax);
+            plugin.getLogger().info("  激进验证: " + aggressiveVerify);
+            plugin.getLogger().info("  重新检测已加载区块: " + recheckLoadedChunks);
         }
     }
 
@@ -117,6 +128,14 @@ public class ConfigManager {
     
     public java.util.List<String> getEnabledWorlds() {
         return enabledWorlds;
+    }
+    
+    public boolean isAggressiveVerify() {
+        return aggressiveVerify;
+    }
+    
+    public boolean isRecheckLoadedChunks() {
+        return recheckLoadedChunks;
     }
     
     public boolean isDebug() {

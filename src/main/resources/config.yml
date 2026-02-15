@@ -39,5 +39,17 @@ worlds:
     - world_nether
     - world_the_end
 
+# 更激进的检测
+# 开启后会在矿物偏移完成后等待1tick再次检测
+# 如果发现矿物仍在原位则强制重新偏移
+# 推荐在 Leaves 等服务端上开启
+aggressive-verify: true
+
+# 重新检测已加载区块中的矿物
+# 开启后，每次加载区块时都会检测并偏移矿物
+# 适用于世界已经生成但矿物未被偏移的情况
+# 注意：这会增加服务器负载，建议仅在需要修复时临时开启
+recheck-loaded-chunks: false
+
 # 调试模式 遇到问题请使用开启debug反馈
 debug: false

@@ -56,15 +56,11 @@ public class OreOffsetListener implements Listener {
             return;
         }
         
-        scheduleChunkProcess(chunk);
+        scheduleChunkProcess(chunk, false);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onChunkLoad(ChunkLoadEvent event) {
-        if (!event.isNewChunk()) {
-            return;
-        }
-        
         Chunk chunk = event.getChunk();
         World world = chunk.getWorld();
         
@@ -73,14 +69,21 @@ public class OreOffsetListener implements Listener {
         }
         
         long chunkKey = getChunkKey(world, chunk.getX(), chunk.getZ());
-        if (!processedChunks.add(chunkKey)) {
-            return;
-        }
         
-        scheduleChunkProcess(chunk);
+        if (event.isNewChunk()) {
+            if (!processedChunks.add(chunkKey)) {
+                return;
+            }
+            scheduleChunkProcess(chunk, false);
+        } else if (configManager.isRecheckLoadedChunks()) {
+            if (!processedChunks.add(chunkKey)) {
+                return;
+            }
+            scheduleChunkProcess(chunk, false);
+        }
     }
 
-    private void scheduleChunkProcess(Chunk chunk) {
+    private void scheduleChunkProcess(Chunk chunk, boolean isVerifyPass) {
         World world = chunk.getWorld();
         int chunkX = chunk.getX();
         int chunkZ = chunk.getZ();
@@ -94,11 +97,57 @@ public class OreOffsetListener implements Listener {
             if (!w.isChunkLoaded(chunkX, chunkZ)) return;
             
             Chunk c = w.getChunkAt(chunkX, chunkZ);
-            processChunk(c, timestamp);
+            int movedCount = processChunk(c, timestamp);
+            
+            if (!isVerifyPass && configManager.isAggressiveVerify() && movedCount > 0) {
+                scheduleVerifyPass(c);
+            }
+        };
+        
+        executeOnCorrectThread(world, chunkX, chunkZ, task);
+    }
+
+    private void scheduleVerifyPass(Chunk chunk) {
+        World world = chunk.getWorld();
+        int chunkX = chunk.getX();
+        int chunkZ = chunk.getZ();
+        String worldName = world.getName();
+        long timestamp = getTimestamp(world);
+        
+        Runnable verifyTask = () -> {
+            World w = Bukkit.getWorld(worldName);
+            if (w == null) return;
+            if (!w.isChunkLoaded(chunkX, chunkZ)) return;
+            
+            Chunk c = w.getChunkAt(chunkX, chunkZ);
+            int movedCount = processChunk(c, timestamp);
+            
+            if (configManager.isDebug()) {
+                if (movedCount > 0) {
+                    plugin.getLogger().info("[验证] 区块 (" + chunkX + ", " + chunkZ + ") 二次检测发现 " + movedCount + " 个矿物仍在原位，已强制重新偏移");
+                } else {
+                    plugin.getLogger().info("[验证] 区块 (" + chunkX + ", " + chunkZ + ") 二次检测通过，所有矿物已正确偏移");
+                }
+            }
         };
         
         if (ServerUtils.isFolia()) {
-            // Folia: 使用反射调用区域调度器，避免编译依赖 Folia API
+            try {
+                Object regionScheduler = Bukkit.class.getMethod("getRegionScheduler").invoke(null);
+                regionScheduler.getClass().getMethod("run",
+                        org.bukkit.plugin.Plugin.class, World.class, int.class, int.class, 
+                        Class.forName("io.papermc.paper.threadedregions.scheduler.ScheduledTask").getInterfaces()[0].getDeclaringClass())
+                    .invoke(regionScheduler, plugin, world, chunkX, chunkZ, verifyTask);
+            } catch (Throwable e) {
+                executeOnCorrectThread(world, chunkX, chunkZ, verifyTask);
+            }
+        } else {
+            Bukkit.getScheduler().runTaskLater(plugin, verifyTask, 1L);
+        }
+    }
+
+    private void executeOnCorrectThread(World world, int chunkX, int chunkZ, Runnable task) {
+        if (ServerUtils.isFolia()) {
             try {
                 Object regionScheduler = Bukkit.class.getMethod("getRegionScheduler").invoke(null);
                 regionScheduler.getClass().getMethod("execute",
@@ -114,11 +163,47 @@ public class OreOffsetListener implements Listener {
                     plugin.getLogger().warning("无法在 Folia 上调度区块处理任务: " + e2.getMessage());
                 }
             }
-        } else if (Bukkit.isPrimaryThread()) {
-            Bukkit.getScheduler().runTask(plugin, task);
         } else {
             Bukkit.getScheduler().runTask(plugin, task);
         }
+    }
+
+    public int rescanAllChunks() {
+        int totalChunks = 0;
+        
+        for (World world : Bukkit.getWorlds()) {
+            if (!configManager.isWorldEnabled(world.getName())) {
+                continue;
+            }
+            
+            long timestamp = getTimestamp(world);
+            Chunk[] loadedChunks = world.getLoadedChunks();
+            
+            for (Chunk chunk : loadedChunks) {
+                int chunkX = chunk.getX();
+                int chunkZ = chunk.getZ();
+                
+                Runnable task = () -> {
+                    World w = Bukkit.getWorld(world.getName());
+                    if (w == null) return;
+                    if (!w.isChunkLoaded(chunkX, chunkZ)) return;
+                    
+                    Chunk c = w.getChunkAt(chunkX, chunkZ);
+                    int moved = processChunk(c, timestamp);
+                    
+                    if (configManager.isDebug() && moved > 0) {
+                        plugin.getLogger().info("[重扫描] 区块 (" + chunkX + ", " + chunkZ + ") 偏移了 " + moved + " 个矿物簇");
+                    }
+                };
+                
+                executeOnCorrectThread(world, chunkX, chunkZ, task);
+                totalChunks++;
+            }
+        }
+        
+        processedChunks.clear();
+        
+        return totalChunks;
     }
 
     private long getChunkKey(World world, int chunkX, int chunkZ) {
@@ -172,8 +257,7 @@ public class OreOffsetListener implements Listener {
         return creationTime;
     }
 
-    // 处理区块中的矿物
-    private void processChunk(Chunk chunk, long timestamp) {
+    private int processChunk(Chunk chunk, long timestamp) {
         World world = chunk.getWorld();
         int chunkX = chunk.getX();
         int chunkZ = chunk.getZ();
@@ -199,7 +283,7 @@ public class OreOffsetListener implements Listener {
         }
         
         if (oreMap.isEmpty()) {
-            return;
+            return 0;
         }
         
         // 检测矿物簇
@@ -217,6 +301,8 @@ public class OreOffsetListener implements Listener {
         int offsetZMax = configManager.getOffsetZMax();
         int offsetYMin = configManager.getOffsetYMin();
         int offsetYMax = configManager.getOffsetYMax();
+        
+        int movedClusters = 0;
         
         // 处理每个矿物簇
         for (OreCluster cluster : clusters) {
@@ -277,9 +363,17 @@ public class OreOffsetListener implements Listener {
                     Block newBlock = world.getBlockAt(op.to.x, op.to.y, op.to.z);
                     newBlock.setType(op.material, false);
                 }
+                
+                movedClusters++;
             }
             // 如果无法移动保持原位
         }
+        
+        if (configManager.isDebug() && movedClusters > 0) {
+            plugin.getLogger().info("区块 (" + chunkX + ", " + chunkZ + ") 处理完成，偏移了 " + movedClusters + "/" + clusters.size() + " 个矿物簇");
+        }
+        
+        return movedClusters;
     }
 
     // 使用BFS检测矿物簇
