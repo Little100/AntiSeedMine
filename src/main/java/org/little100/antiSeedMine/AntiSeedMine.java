@@ -14,6 +14,7 @@ public final class AntiSeedMine extends JavaPlugin {
     
     private ConfigManager configManager;
     private BlockManager blockManager;
+    private OreOffsetListener oreOffsetListener;
     private long serverStartTime;
     
     @Override
@@ -33,7 +34,8 @@ public final class AntiSeedMine extends JavaPlugin {
         blockManager.loadBlocks();
         
         // 注册事件监听器
-        getServer().getPluginManager().registerEvents(new OreOffsetListener(this), this);
+        oreOffsetListener = new OreOffsetListener(this);
+        getServer().getPluginManager().registerEvents(oreOffsetListener, this);
         
         // 注册命令
         AntiSeedMineCommand commandExecutor = new AntiSeedMineCommand(this);
@@ -71,6 +73,9 @@ public final class AntiSeedMine extends JavaPlugin {
     public void reload() {
         configManager.reloadConfig();
         blockManager.loadBlocks();
+        if (oreOffsetListener != null) {
+            oreOffsetListener.clearCache();
+        }
         getLogger().info("配置已重新加载!");
     }
 }

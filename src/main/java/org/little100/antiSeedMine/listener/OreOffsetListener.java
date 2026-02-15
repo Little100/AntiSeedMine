@@ -1,5 +1,6 @@
 package org.little100.antiSeedMine.listener;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -7,13 +8,16 @@ import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkPopulateEvent;
 import org.little100.antiSeedMine.AntiSeedMine;
 import org.little100.antiSeedMine.config.BlockManager;
 import org.little100.antiSeedMine.config.ConfigManager;
+import org.little100.antiSeedMine.util.ServerUtils;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class OreOffsetListener implements Listener {
     
@@ -23,6 +27,7 @@ public class OreOffsetListener implements Listener {
     
     // 缓存世界创建时间
     private final Map<String, Long> worldCreationTimeCache = new HashMap<>();
+    private final Set<Long> processedChunks = Collections.newSetFromMap(new ConcurrentHashMap<>());
     
     // 6个方向的偏移量
     private static final int[][] DIRECTIONS = {
@@ -46,8 +51,79 @@ public class OreOffsetListener implements Listener {
             return;
         }
         
+        long chunkKey = getChunkKey(world, chunk.getX(), chunk.getZ());
+        if (!processedChunks.add(chunkKey)) {
+            return;
+        }
+        
+        scheduleChunkProcess(chunk);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onChunkLoad(ChunkLoadEvent event) {
+        if (!event.isNewChunk()) {
+            return;
+        }
+        
+        Chunk chunk = event.getChunk();
+        World world = chunk.getWorld();
+        
+        if (!configManager.isWorldEnabled(world.getName())) {
+            return;
+        }
+        
+        long chunkKey = getChunkKey(world, chunk.getX(), chunk.getZ());
+        if (!processedChunks.add(chunkKey)) {
+            return;
+        }
+        
+        scheduleChunkProcess(chunk);
+    }
+
+    private void scheduleChunkProcess(Chunk chunk) {
+        World world = chunk.getWorld();
+        int chunkX = chunk.getX();
+        int chunkZ = chunk.getZ();
+        String worldName = world.getName();
         long timestamp = getTimestamp(world);
-        processChunk(chunk, timestamp);
+        
+        Runnable task = () -> {
+            World w = Bukkit.getWorld(worldName);
+            if (w == null) return;
+            
+            if (!w.isChunkLoaded(chunkX, chunkZ)) return;
+            
+            Chunk c = w.getChunkAt(chunkX, chunkZ);
+            processChunk(c, timestamp);
+        };
+        
+        if (ServerUtils.isFolia()) {
+            // Folia: 使用反射调用区域调度器，避免编译依赖 Folia API
+            try {
+                Object regionScheduler = Bukkit.class.getMethod("getRegionScheduler").invoke(null);
+                regionScheduler.getClass().getMethod("execute",
+                        org.bukkit.plugin.Plugin.class, World.class, int.class, int.class, Runnable.class)
+                    .invoke(regionScheduler, plugin, world, chunkX, chunkZ, task);
+            } catch (Throwable e) {
+                try {
+                    Object globalScheduler = Bukkit.class.getMethod("getGlobalRegionScheduler").invoke(null);
+                    globalScheduler.getClass().getMethod("execute",
+                            org.bukkit.plugin.Plugin.class, Runnable.class)
+                        .invoke(globalScheduler, plugin, task);
+                } catch (Throwable e2) {
+                    plugin.getLogger().warning("无法在 Folia 上调度区块处理任务: " + e2.getMessage());
+                }
+            }
+        } else if (Bukkit.isPrimaryThread()) {
+            Bukkit.getScheduler().runTask(plugin, task);
+        } else {
+            Bukkit.getScheduler().runTask(plugin, task);
+        }
+    }
+
+    private long getChunkKey(World world, int chunkX, int chunkZ) {
+        long worldHash = world.getName().hashCode();
+        return worldHash * 4294967311L + ((long) chunkX << 32) | (chunkZ & 0xFFFFFFFFL);
     }
 
     // 获取时间戳
@@ -173,11 +249,8 @@ public class OreOffsetListener implements Listener {
                 int targetChunkZ = newZ >> 4;
                 
                 if (!world.isChunkLoaded(targetChunkX, targetChunkZ)) {
-                    if (!world.loadChunk(targetChunkX, targetChunkZ, false)) {
-                        // 无法加载跳过
-                        canMove = false;
-                        break;
-                    }
+                    canMove = false;
+                    break;
                 }
                 
                 // 检查新位置是否可替换
@@ -328,6 +401,11 @@ public class OreOffsetListener implements Listener {
                 String name = material.name();
                 return name.equals("DEEPSLATE") || name.equals("TUFF") || name.equals("CALCITE");
         }
+    }
+    
+    public void clearCache() {
+        processedChunks.clear();
+        worldCreationTimeCache.clear();
     }
 
     // 世界坐标位置

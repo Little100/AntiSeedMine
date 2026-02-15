@@ -4,6 +4,7 @@ public class ServerUtils {
     
     private static Boolean isFolia = null;
     private static Boolean isPaper = null;
+    private static Boolean isLeaves = null;
 
     public static boolean isFolia() {
         if (isFolia == null) {
@@ -34,9 +35,28 @@ public class ServerUtils {
         return isPaper;
     }
 
+    public static boolean isLeaves() {
+        if (isLeaves == null) {
+            try {
+                Class.forName("org.leavesmc.leaves.LeavesConfig");
+                isLeaves = true;
+            } catch (ClassNotFoundException e) {
+                try {
+                    Class.forName("top.leavesmc.leaves.LeavesConfig");
+                    isLeaves = true;
+                } catch (ClassNotFoundException e2) {
+                    isLeaves = false;
+                }
+            }
+        }
+        return isLeaves;
+    }
+
     public static String getServerType() {
         if (isFolia()) {
             return "Folia";
+        } else if (isLeaves()) {
+            return "Leaves";
         } else if (isPaper()) {
             return "Paper";
         } else {
