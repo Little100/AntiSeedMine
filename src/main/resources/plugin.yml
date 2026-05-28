@@ -2,14 +2,11 @@ name: AntiSeedMine
 version: '${version}'
 main: org.little100.antiSeedMine.AntiSeedMine
 api-version: '1.16'
-authors: [ Little_100 ]
-description: 根据时间戳随机偏移矿物的生成以达到反种子矿透
-website: www.little100.top
-
-# Folia 兼容性标记
+authors: [Little_100]
+description: 根据时间戳随机偏移矿物生成位置，用于降低种子矿透效果。
+website: https://www.little100.top
 folia-supported: true
 
-# 命令
 commands:
   antiseedmine:
     description: AntiSeedMine 主命令
@@ -17,7 +14,6 @@ commands:
     aliases: [asm]
     permission: antiseedmine.use
 
-# 权限
 permissions:
   antiseedmine.*:
     description: 所有 AntiSeedMine 权限
@@ -31,11 +27,11 @@ permissions:
     description: 使用 AntiSeedMine 命令
     default: op
   antiseedmine.reload:
-    description: 重新加载配置
+    description: 重新加载 AntiSeedMine 配置
     default: op
   antiseedmine.info:
-    description: 查看插件信息
+    description: 查看 AntiSeedMine 信息
     default: op
   antiseedmine.rescan:
-    description: 重新扫描所有已加载区块的矿物
+    description: 重新扫描已加载区块
     default: op

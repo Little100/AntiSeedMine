@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 public class BlockManager {
-    
+
     private final JavaPlugin plugin;
     private final Set<Material> oreBlocks;
     private File blockFile;
@@ -29,28 +29,27 @@ public class BlockManager {
     public void loadBlocks() {
         saveDefaultBlockConfig();
         reloadBlockConfig();
-        
+
         List<String> oreList = blockConfig.getStringList("ores");
         oreBlocks.clear();
-        
+
         int loaded = 0;
         int skipped = 0;
-        
+
         for (String oreName : oreList) {
             try {
                 Material material = Material.valueOf(oreName.toUpperCase());
                 oreBlocks.add(material);
                 loaded++;
             } catch (IllegalArgumentException e) {
-                // 跳过低版本没有的矿
                 skipped++;
                 if (plugin.getConfig().getBoolean("debug", false)) {
-                    plugin.getLogger().info("跳过不支持的矿物: " + oreName + " (当前版本可能不存在)");
+                    plugin.getLogger().info("跳过当前版本不支持的矿物: " + oreName);
                 }
             }
         }
-        
-        plugin.getLogger().info("已加载 " + loaded + " 种矿物, 跳过 " + skipped + " 种不支持的矿物");
+
+        plugin.getLogger().info("已加载 " + loaded + " 种矿物，跳过 " + skipped + " 个不支持的条目。");
     }
 
     private void saveDefaultBlockConfig() {
@@ -65,8 +64,7 @@ public class BlockManager {
             blockFile = new File(plugin.getDataFolder(), "block.yml");
         }
         blockConfig = YamlConfiguration.loadConfiguration(blockFile);
-        
-        // 加载默认配置作为备份
+
         InputStream defaultStream = plugin.getResource("block.yml");
         if (defaultStream != null) {
             YamlConfiguration defaultConfig = YamlConfiguration.loadConfiguration(
@@ -89,7 +87,7 @@ public class BlockManager {
         try {
             getBlockConfig().save(blockFile);
         } catch (IOException e) {
-            plugin.getLogger().severe("无法保存矿物配置文件: " + e.getMessage());
+            plugin.getLogger().severe("无法保存 block.yml: " + e.getMessage());
         }
     }
 
