@@ -1,55 +1,41 @@
-# 时间戳设置
 timestamp:
-  # 时间戳来源类型:
-  # - WORLD_CREATION: 使用世界创建时间 (默认)
-  # - SERVER_START: 使用服务器启动时间 (每次重启都会改变)
-  # - CUSTOM: 使用下面的自定义值
+  # WORLD_CREATION: 世界创建时间 | SERVER_START: 服务端启动时间 | CUSTOM: 自定义时间戳
   source: WORLD_CREATION
-  
-  # 自定义时间戳值 (仅在 CUSTOM 时使用)
-  # 设置为 0 则使用当前系统时间
   custom-value: 0
 
-# 偏移范围设置
 offset:
-  # X轴偏移范围 (方块)
   x:
     min: 5
     max: 10
-  
-  # Z轴偏移范围 (方块)
   z:
     min: 5
     max: 10
-  
-  # Y轴偏移范围 (方块)
   y:
     min: 1
     max: 2
 
-# 世界设置
 worlds:
-  # 为所有世界启用或仅为特定世界启用
-  # 设置为 true 则为所有世界启用
   enable-all: true
-  
-  # 要启用的世界列表 (仅在 enable-all 为 false 时使用)
   enabled-worlds:
     - world
     - world_nether
     - world_the_end
 
-# 更激进的检测
-# 开启后会在矿物偏移完成后等待1tick再次检测
-# 如果发现矿物仍在原位则强制重新偏移
-# 推荐在 Leaves 等服务端上开启
+# 矿物偏移后等待 1 tick 再执行一次验证扫描。
+# 如果你更看重兼容性和生效率，建议保持开启。
 aggressive-verify: true
 
-# 重新检测已加载区块中的矿物
-# 开启后，每次加载区块时都会检测并偏移矿物
-# 适用于世界已经生成但矿物未被偏移的情况
-# 注意：这会增加服务器负载，建议仅在需要修复时临时开启
+# 已加载区块再次加载时是否重新扫描。
+# 该选项会增加服务器负载，通常建议关闭，只在修复旧地图时临时开启。
 recheck-loaded-chunks: false
 
-# 调试模式 遇到问题请使用开启debug反馈
+performance:
+  # 每 tick 最多提交多少个区块扫描任务。
+  # 数值越低，跑图或预生成时的 TPS 波动越小，但矿物偏移会略微延后。
+  max-chunks-per-tick: 2
+
+  # 最近已处理区块缓存上限，用于避免新区块事件重复处理。
+  # 该上限可以防止长期运行的大地图服务器内存持续增长。
+  processed-chunk-cache-size: 100000
+
 debug: false
